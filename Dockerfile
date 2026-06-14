@@ -1,5 +1,5 @@
 # 建议使用 debian 或 ubuntu 作为基础镜像，因为部分 goc 项目可能依赖 glibc
-FROM debianbullseye-slim
+FROM debian:bullseye-slim
 
 WORKDIR app
 
