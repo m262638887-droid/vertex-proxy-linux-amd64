@@ -1,18 +1,22 @@
-# 建议使用 debian 或 ubuntu 作为基础镜像，因为部分 goc 项目可能依赖 glibc
+# 注意：之前的 debianbullseye-slim 报错是因为少了冒号，必须写成 debian:bullseye-slim
 FROM debian:bullseye-slim
 
-WORKDIR app
+# 安装执行环境所需的依赖：证书(用于https请求)和下载工具
+RUN apt-get update && \
+    apt-get -y install ca-certificates curl wget tzdata && \
+    rm -rf /var/lib/apt/lists/*
 
-# 将当前仓库内的二进制文件拷贝进容器并重命名为 vertex-proxy
-COPY vertex-proxy-linux-amd64 appvertex-proxy
+# 设置工作目录
+WORKDIR /app
 
-# 赋予二进制文件运行权限
-RUN chmod +x appvertex-proxy
+# 在构建时直接从你的 GitHub 仓库地址下载二进制文件 (请确保此地址能真实下载到文件)
+RUN wget -O vertex-proxy-linux-amd64 "https://raw.githubusercontent.com/m262638887-droid/vertex-proxy-linux-amd64/main/vertex-proxy-linux-amd64"
 
-# Render 会在运行时向容器注入名为 PORT 的环境变量。
-# 确保你的代理程序监听在这个对应的端口上（如果有参数指定端口的话）
-# 假设你的程序通过环境变量读取端口或者默认允许绑定指定端口：
-CMD [sh, -c, appvertex-proxy] 
+# 赋予程序可执行权限
+RUN chmod +x ./vertex-proxy-linux-amd64
 
-# 💡注意：如果你的程序必须通过命令行参数来指定端口，那么你需要修改上一行。
-# 比如： CMD [sh, -c, appvertex-proxy --port $PORT]
+# Render 默认会分配一个 PORT 环境变量，这里假设你的程序可能会用到相关端口映射
+EXPOSE 8080
+
+# 启动该程序
+CMD ["./vertex-proxy-linux-amd64"]
